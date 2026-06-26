@@ -1,0 +1,17 @@
+# Virtual environment
+.venv/
+
+# Secrets
+.env
+
+# Data (copyrighted transcripts + derived artifacts — never commit).
+# Ignore contents but keep the folders via their .gitkeep.
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
