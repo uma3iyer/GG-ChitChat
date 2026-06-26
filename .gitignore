@@ -11,6 +11,10 @@ data/processed/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 
+# Local project notes (not for the public repo)
+CLAUDE.md
+Roadmap.md
+
 # Python
 __pycache__/
 *.py[cod]
