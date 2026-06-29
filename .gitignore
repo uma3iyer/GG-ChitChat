@@ -19,3 +19,6 @@ Roadmap.md
 __pycache__/
 *.py[cod]
 .pytest_cache/
+
+# macOS
+.DS_Store

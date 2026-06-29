@@ -98,3 +98,16 @@ def test_model_and_token_cap_passed(patched):
     generate.reply("Lorelai", "hi")
     assert client.kwargs["model"] == generate.REPLY_MODEL
     assert client.kwargs["max_tokens"] == generate.REPLY_MAX_TOKENS
+
+
+def test_default_omits_output_config(patched):
+    client, _calls = patched
+    generate.reply("Lorelai", "hi")
+    assert "output_config" not in client.kwargs
+
+
+def test_effort_and_max_tokens_overrides(patched):
+    client, _calls = patched
+    generate.reply("Lorelai", "hi", max_tokens=180, effort="low")
+    assert client.kwargs["max_tokens"] == 180
+    assert client.kwargs["output_config"] == {"effort": "low"}

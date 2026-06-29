@@ -60,8 +60,19 @@ def _client():
     return anthropic.Anthropic()
 
 
-def reply(character: str, message: str, k: int = RETRIEVE_K) -> str:
-    """Generate a NEW in-character reply to ``message`` (never a verbatim line)."""
+def reply(
+    character: str,
+    message: str,
+    k: int = RETRIEVE_K,
+    *,
+    max_tokens: int = REPLY_MAX_TOKENS,
+    effort: str | None = None,
+) -> str:
+    """Generate a NEW in-character reply to ``message`` (never a verbatim line).
+
+    ``max_tokens`` and ``effort`` (e.g. "low") let callers bound cost; ``effort``
+    is only sent when provided, so default behavior is unchanged.
+    """
     card = style.build_style_card(character)            # cached style card
     exemplars = style.retrieve(character, message, k)   # top-k relevant real lines
 
@@ -71,12 +82,15 @@ def reply(character: str, message: str, k: int = RETRIEVE_K) -> str:
         message=message,
         character=character,
     )
-    msg = _client().messages.create(
-        model=REPLY_MODEL,
-        max_tokens=REPLY_MAX_TOKENS,
-        system=system,
-        messages=[{"role": "user", "content": user}],
-    )
+    kwargs: dict = {
+        "model": REPLY_MODEL,
+        "max_tokens": max_tokens,
+        "system": system,
+        "messages": [{"role": "user", "content": user}],
+    }
+    if effort is not None:
+        kwargs["output_config"] = {"effort": effort}
+    msg = _client().messages.create(**kwargs)
     return "".join(b.text for b in msg.content if b.type == "text").strip()
 
 

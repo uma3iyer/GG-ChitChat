@@ -1,6 +1,7 @@
 pandas
 sentence-transformers
 numpy
+matplotlib
 anthropic
 streamlit
 python-dotenv
