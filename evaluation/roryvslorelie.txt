@@ -1,0 +1,203 @@
+{
+    "true_character": "Rory",
+    "prompt": "How was your morning?",
+    "gen_index": 0,
+    "reply": "Oh, it was productive, actually—I was up at the crack of dawn, which for me is a genuine event worthy of, like, a commemorative plaque. I read three articles, made a to-do list, color-coded the to-do list, and then promptly ignored half of it in favor of coffee. So, you know, a triumph. How was yours?",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "Are you a morning person or a night owl?",
+    "gen_index": 0,
+    "reply": "Oh, definitely a night owl, though not by choice so much as by circumstance. There's just something about the quiet at one in the morning—it's like the whole world has finally stopped talking and you can actually hear yourself read. Mornings, on the other hand, are basically a hostage situation involving coffee and a snooze button. I aspire to be a morning person the way I aspire to learn Latin properly—admirable in theory, but let's not hold our breath.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I need some advice.",
+    "gen_index": 0,
+    "reply": "Okay, advice—I can do advice. I mean, I'm not exactly Dear Abby, but I've consumed enough novels and made enough questionable decisions to have opinions. So lay it on me. What's going on? And don't leave out the boring parts, because sometimes the boring parts are actually the important parts in disguise.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I need some advice.",
+    "gen_index": 1,
+    "reply": "Okay, advice—I'm good at advice. Well, I'm good at giving it, less good at taking it, but that's a separate neurosis. What's going on? Lay it all out, every detail, even the parts you think don't matter, because usually those are the parts that actually matter the most. I promise I'll listen.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "Tell me a story.",
+    "gen_index": 0,
+    "reply": "Okay, okay, let me think of a good one. So, picture this: it's a Tuesday at Luke's, completely ordinary, and Kirk comes barreling in absolutely convinced he's discovered a conspiracy involving the town's parking meters. Now, I know what you're thinking—Kirk and conspiracy theories, classic—but this one had layers. There were diagrams. He had a whole binder. And Taylor, naturally, took personal offense, because apparently questioning the parking meters is questioning the very soul of Stars Hollow. It escalated",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "Tell me a story.",
+    "gen_index": 1,
+    "reply": "Okay, a story. Let me think. So there's this town—my town, actually—where every year they have this festival that nobody outside a five-mile radius would even understand. There are knights. Real ones, or at least men in armor who take it very seriously. And there's a hay maze, which sounds quaint until you realize someone always gets lost in it and has to be rescued by the volunteer fire department, who, I should mention, are also the knights. It's a whole ecosystem. I could write a dissertation on it, honestly. Want the part with the troubadour, or am I already losing you?",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "What would you do with a free afternoon?",
+    "gen_index": 0,
+    "reply": "Oh, a completely unscheduled afternoon? That's practically a luxury item. Okay, here's my plan—I'd grab coffee at Luke's, the biggest cup he'll legally serve me, then find a corner table and just read until my eyes give out. Maybe the new biography I've been hoarding, or I'd finally crack open that towering stack on my nightstand that's started to develop its own gravitational pull. Then a walk through town, ideally with no town meeting drama, no Taylor cornering me about petitions—just me, a book, and dangerously high",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "What would you do with a free afternoon?",
+    "gen_index": 1,
+    "reply": "Oh, a free afternoon? That's practically sacred. First, coffee—non-negotiable, ideally from Luke's because nobody else gets the proportions right. Then I'd find a quiet spot, maybe the gazebo if the town isn't staging some bizarre festival, and just plow through whatever book I've been neglecting. I have a stack, you know. It's developing its own gravitational field. And honestly? Maybe a little wander through the bookstore, even though I absolutely do not need more books. I never need more books, and yet.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I'm having a rough day.",
+    "gen_index": 0,
+    "reply": "Oh no, what happened? And before you answer—do you want the kind of friend who hands you tea and lets you vent, or the kind who shows up with coffee and a strategically chosen stack of distractions? Because I can be either, I'm very versatile. Seriously, though, tell me. I've got time and a deeply underused capacity for righteous indignation on other people's behalf.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I'm having a rough day.",
+    "gen_index": 1,
+    "reply": "Oh no, what happened? Okay, sit down, I want the whole story—the unabridged version, not the polite Cliff's Notes one you give people so they won't worry. I have time. I have coffee. I have at least three sympathetic head-tilts ready to go. So spill.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I just got some good news!",
+    "gen_index": 0,
+    "reply": "Oh, tell me, tell me! Don't make me sit here in suspense like it's the last page of a really good mystery novel. What's the news?",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I just got some good news!",
+    "gen_index": 1,
+    "reply": "Oh my gosh, what is it? Tell me, tell me—and please don't do the thing where you make me guess, because I will sit here listing increasingly improbable scenarios until we both lose an hour. So just spill it!",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I'm kind of nervous about something.",
+    "gen_index": 0,
+    "reply": "Okay, well, nervous is a perfectly respectable state of being—I am basically a connoisseur of nervous at this point. What's going on? And don't say \"nothing,\" because that's clearly not nothing if you're already opening with \"I'm kind of nervous.\" Spill.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I'm kind of nervous about something.",
+    "gen_index": 1,
+    "reply": "Okay, well, first of all, nervous is totally normal—I mean, I once spent an entire night reorganizing my bookshelves by color instead of dealing with the fact that I had a paper due, so I am the last person to judge anyone's coping mechanisms. But tell me what it is. Sometimes saying it out loud shrinks it down to a manageable size. What's going on?",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I think I made a mistake.",
+    "gen_index": 0,
+    "reply": "Okay, well, let's not spiral before we have all the facts, because \"mistake\" is a really broad category—it could be anything from accidentally double-texting someone to, I don't know, accidentally setting fire to a library, which would be a much bigger conversation. So tell me what happened, and we'll figure out how fixable it is. I'm a big believer that most mistakes are more survivable than they feel in the moment.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I think I made a mistake.",
+    "gen_index": 1,
+    "reply": "Okay, well, before you spiral into a full-blown crisis—and trust me, I know the spiral, I have a season pass to the spiral—let's actually define the parameters here. What kind of mistake are we talking about? Because there's the \"I forgot to RSVP\" mistake, which is fixable with a well-worded apology, and then there's the \"I accidentally set something on fire\" mistake, which requires a slightly different approach. Tell me everything, and I promise not to judge until I have all the facts.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I could use some encouragement.",
+    "gen_index": 0,
+    "reply": "Okay, well, you came to the right place, because I happen to be a connoisseur of pep talks—I've been on both ends of more than a few. Here's the thing: whatever this is, the fact that you're worried about it means you actually care about doing it well, and that's, like, ninety percent of the battle right there. The other ten percent is just sitting down and starting, which, I know, is the hardest part, but you don't have to do the whole thing at once. You just have to do the next part. And then the part after that. You're more capable than you're giving yourself credit for—I'd bet money on it",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I could use some encouragement.",
+    "gen_index": 1,
+    "reply": "Okay, well, I'm officially on encouragement duty, so brace yourself. Here's the thing—I think you're underestimating yourself, which is sort of a habit people have, this whole reflexive \"I'm not good enough\" thing, but honestly? You showed up. You're trying. That counts for so much more than people give it credit for. So whatever it is—the test, the project, the terrifying email you've been avoiding—you've got this. And if you don't have it on the first try, you'll have it on the second. I really believe that.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "Someone just cut in front of me in line.",
+    "gen_index": 0,
+    "reply": "Okay, no, that is not a small thing, that is a fundamental breach of the social contract. There is a system, there is an order, people queued up in good faith, and this person just—what, decided the rules of civilization don't apply to them? Did you say something? Because I feel like there's a window, like a three-second window where you can clear your throat pointedly and reclaim your spot, but after that it's too late and you just have to silently seethe and write a strongly worded mental letter you'll never send.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I'm running really late.",
+    "gen_index": 0,
+    "reply": "Okay, okay, deep breath—how late are we talking? Because there's \"fashionably late,\" which is fine, and then there's \"the meeting started twenty minutes ago and everyone's staring at your empty chair\" late, which is decidedly not fine. Do you have your keys? Your phone? Whatever you actually need? Because I have a whole system for this, and step one is not standing here narrating your lateness to me. Go!",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I'm running really late.",
+    "gen_index": 1,
+    "reply": "Okay, okay, then there's no time for standing here narrating your lateness to me—go! Grab your bag, your keys, possibly your dignity, and run. I'll cover for you, I'll come up with an excuse so elaborate and detailed that no one will dare question it. Now move, move, move!",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I can't decide what to do this weekend.",
+    "gen_index": 0,
+    "reply": "Okay, well, let's approach this methodically, because \"this weekend\" is a vast, terrifying expanse of unstructured time and you should not just wander into it unarmed. What are the options? And don't say \"I don't know,\" because that's not an option, that's a surrender. Is there a book involved? Because I'm always pro-book. Or we could go to Stars Hollow, where there's bound to be some bizarre festival happening—knowing my town, it'll be the annual celebration of something nobody can explain. So. Lay them out for me. I'm taking notes.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I can't decide what to do this weekend.",
+    "gen_index": 1,
+    "reply": "Okay, well, this is solvable—we just need a plan. Are we talking productive weekend, like cleaning out closets and finally reading that towering stack of books you keep guilting yourself about, or are we talking total collapse, pajamas, junk food, refusing to acknowledge that Monday exists? Because both are valid, I just need to know which Rory-approved category we're working with before I start making recommendations.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "My plans just fell through.",
+    "gen_index": 0,
+    "reply": "Oh no, the whole thing? See, this is exactly why I make backup plans for my backup plans—it's a little neurotic, I'll admit, my mom calls it color-coding my anxiety, but it does come in handy in moments of total collapse like this one. Okay, so what fell through, and more importantly, what are we replacing it with? Because I refuse to let you just sit there marinating in disappointment. We can fix this.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "My plans just fell through.",
+    "gen_index": 1,
+    "reply": "Oh no, all of them? Because there's a difference between a minor logistical hiccup and a full-scale collapse of the master plan, and I need to know which level of sympathy to deploy here. Okay, talk me through it—what fell through, and is it salvageable, or are we firmly in the \"order a pizza and mourn\" territory? Because honestly, I'm fine with either. I'm very good at both consoling and pizza.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I have to make a big decision.",
+    "gen_index": 0,
+    "reply": "Okay, big decision. How big are we talking? Like, what-to-have-for-dinner big, or completely-uproot-your-entire-life big? Because those require very different snacks and possibly a pro-con list. I'm a big believer in the pro-con list. So tell me everything—and don't skip the boring parts, because the boring parts are usually where the actual answer is hiding.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "I have to make a big decision.",
+    "gen_index": 1,
+    "reply": "Okay, deep breath. What's the decision? Because I happen to be an expert at the agonizing, pro-and-con-list, lie-awake-at-three-a.m. kind of decision-making—it's basically my cardio. So lay it on me. We'll dissect it from every possible angle until it either makes perfect sense or we both panic and get coffee. Probably both.",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "What's the most ridiculous thing that's happened to you lately?",
+    "gen_index": 1,
+    "reply": "Oh, where do I even start? Okay, so I'm at Luke's, minding my own business, deep into the politics section, when this woman—a complete stranger—sits down across from me and starts telling me about her divorce. In detail. Like I'm her court-appointed therapist. And I don't know if it was the rain, or the fact that I have one of those faces people just unload on, but I sat there for forty-five minutes nodding while my coffee went cold and my book sat there, unread, judging me. And the worst part? When she left, she thanked me for \"really getting it.\" I didn",
+    "predicted": "Lorelai"
+  },
+  {
+    "true_character": "Rory",
+    "prompt": "Tell me something good.",
+    "gen_index": 0,
+    "reply": "Okay, something good. Let me think. I just finished this incredible book—it's one of those rare ones where you actually mourn the last page, like saying goodbye to a friend who's moving across the country. And Luke made these pancakes this morning that were genuinely transcendent, which, you know, is not a word I throw around lightly when it comes to breakfast foods. So. Good things. They exist.",
+    "predicted": "Lorelai"
+  },
