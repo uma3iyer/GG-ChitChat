@@ -26,7 +26,7 @@ MIN_WORDS = 3                      # drop low-personality lines ("Mom", "Yeah", 
 CARD_SAMPLE_SIZE = 80              # exemplar lines shown to the LLM when writing a card
 CARD_MAX_TOKENS = 1024
 CONTRAST_POOL = 30                 # candidate pool by query similarity before reranking
-CONTRAST_WEIGHT = 0.5             # weight on distinctiveness vs query similarity
+CONTRAST_WEIGHT = 0.25           # weight on distinctiveness vs query similarity
 MOTIF_CAP = 1                     # <=1 coffee line and <=1 book/read line in the final k
 DUP_SIM = 0.9                     # cosine >= this -> treat as a near-duplicate
 

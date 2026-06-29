@@ -40,7 +40,7 @@ GEN_PER_CHARACTER = {
     "Paris": 1,
 }
 EVAL_EFFORT = "low"                 # bound cost/latency on the generation calls
-EVAL_MAX_TOKENS = 180
+EVAL_MAX_TOKENS = 256              # headroom so replies don't truncate mid-sentence
 JUDGE_MODEL = "claude-haiku-4-5"   # cheaper than generation; runs 270x
 JUDGE_MAX_TOKENS = 32
 JUDGE_RETRIES = 1                  # one retry on a malformed answer
@@ -170,9 +170,10 @@ def judge_replies(rejudge: bool = False) -> list[dict]:
 
 # --- single-character refresh (regenerate + re-judge one character only) --------
 
-def regenerate_character(character: str) -> list[dict]:
-    """Regenerate only this character's replies in eval_replies.json (others untouched)."""
-    rows = json.loads(REPLIES_PATH.read_text(encoding="utf-8"))
+def regenerate_character(character: str, *, src=None, dst=None) -> list[dict]:
+    """Regenerate only this character's replies (others copied through unchanged)."""
+    src, dst = src or REPLIES_PATH, dst or REPLIES_PATH
+    rows = json.loads(src.read_text(encoding="utf-8"))
     updated = [
         {
             **r,
@@ -185,16 +186,17 @@ def regenerate_character(character: str) -> list[dict]:
         for r in rows
     ]
     EVAL_DIR.mkdir(parents=True, exist_ok=True)
-    REPLIES_PATH.write_text(json.dumps(updated, indent=2, ensure_ascii=False), encoding="utf-8")
+    dst.write_text(json.dumps(updated, indent=2, ensure_ascii=False), encoding="utf-8")
     return updated
 
 
-def rejudge_character(character: str) -> list[dict]:
+def rejudge_character(character: str, *, replies=None, reuse=None, dst=None) -> list[dict]:
     """Re-judge only this character's replies; reuse cached predictions for everyone else."""
-    replies = json.loads(REPLIES_PATH.read_text(encoding="utf-8"))
+    replies, reuse, dst = replies or REPLIES_PATH, reuse or JUDGMENTS_PATH, dst or JUDGMENTS_PATH
+    rows = json.loads(replies.read_text(encoding="utf-8"))
     old = {
         (j["true_character"], j["prompt"], j["gen_index"]): j["predicted"]
-        for j in json.loads(JUDGMENTS_PATH.read_text(encoding="utf-8"))
+        for j in json.loads(reuse.read_text(encoding="utf-8"))
     }
     judged = [
         {
@@ -203,21 +205,31 @@ def rejudge_character(character: str) -> list[dict]:
             if r["true_character"] == character
             else old.get((r["true_character"], r["prompt"], r["gen_index"])),
         }
-        for r in replies
+        for r in rows
     ]
     EVAL_DIR.mkdir(parents=True, exist_ok=True)
-    JUDGMENTS_PATH.write_text(json.dumps(judged, indent=2, ensure_ascii=False), encoding="utf-8")
+    dst.write_text(json.dumps(judged, indent=2, ensure_ascii=False), encoding="utf-8")
     return judged
 
 
-def refresh_character(character: str) -> None:
-    """Regenerate + re-judge one character, recompute, and print a before/after."""
+def refresh_character(character: str, suffix: str = "") -> None:
+    """Regenerate + re-judge one character into <name><suffix> files; print before/after.
+
+    The base (no-suffix) files are read as source/baseline and left untouched, so a
+    non-empty suffix produces a comparable second version side by side.
+    """
+    out_replies = EVAL_DIR / f"eval_replies{suffix}.json"
+    out_judgments = EVAL_DIR / f"eval_judgments{suffix}.json"
+    out_csv = EVAL_DIR / f"confusion_matrix{suffix}.csv"
+    out_png = EVAL_DIR / f"confusion_matrix{suffix}.png"
     idx = {c: i for i, c in enumerate(CHARACTERS)}
-    before = compute_metrics()
-    regenerate_character(character)
-    rejudge_character(character)
-    after = compute_metrics()
-    save_heatmap(after)
+
+    before = compute_metrics(JUDGMENTS_PATH)                       # v1 baseline (no write)
+    regenerate_character(character, src=REPLIES_PATH, dst=out_replies)
+    rejudge_character(character, replies=out_replies, reuse=JUDGMENTS_PATH, dst=out_judgments)
+    after = compute_metrics(out_judgments)
+    _save_matrix_csv(after["confusion"], out_csv)
+    save_heatmap(after, out_png)
 
     def to_lorelai(m: dict) -> int:
         return int(m["confusion"][idx[character], idx["Lorelai"]])
@@ -232,11 +244,12 @@ def refresh_character(character: str) -> None:
 
 # --- step 3: metrics + report --------------------------------------------------
 
-def compute_metrics() -> dict:
-    """Confusion matrix + accuracy + recall from eval_judgments.json; writes CSV."""
-    if not JUDGMENTS_PATH.exists():
-        raise FileNotFoundError("No eval_judgments.json — run the judge step first.")
-    judged = json.loads(JUDGMENTS_PATH.read_text(encoding="utf-8"))
+def compute_metrics(judgments_path=None) -> dict:
+    """Confusion matrix + accuracy + recall from a judgments file (pure — no writes)."""
+    judgments_path = judgments_path or JUDGMENTS_PATH
+    if not judgments_path.exists():
+        raise FileNotFoundError(f"No {judgments_path.name} — run the judge step first.")
+    judged = json.loads(judgments_path.read_text(encoding="utf-8"))
 
     idx = {c: i for i, c in enumerate(CHARACTERS)}
     n = len(CHARACTERS)
@@ -265,7 +278,6 @@ def compute_metrics() -> dict:
         key=lambda t: t[2],
     )
 
-    _save_matrix_csv(conf)
     return {
         "characters": list(CHARACTERS),
         "confusion": conf,
@@ -278,17 +290,19 @@ def compute_metrics() -> dict:
     }
 
 
-def _save_matrix_csv(conf: np.ndarray) -> None:
+def _save_matrix_csv(conf: np.ndarray, path=None) -> None:
+    path = path or MATRIX_CSV
     EVAL_DIR.mkdir(parents=True, exist_ok=True)
-    with MATRIX_CSV.open("w", newline="", encoding="utf-8") as f:
+    with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["true\\pred", *CHARACTERS])
         for c, row in zip(CHARACTERS, conf):
             w.writerow([c, *row.tolist()])
 
 
-def save_heatmap(m: dict) -> None:
+def save_heatmap(m: dict, png=None) -> None:
     """Render the confusion matrix as a heatmap PNG (color = recall, counts annotated)."""
+    png = png or HEATMAP_PNG
     import matplotlib
 
     matplotlib.use("Agg")              # no display needed; just write a file
@@ -321,7 +335,7 @@ def save_heatmap(m: dict) -> None:
     fig.colorbar(im, ax=ax, label="row-normalized (recall)")
     fig.tight_layout()
     EVAL_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(HEATMAP_PNG, dpi=150)
+    fig.savefig(png, dpi=150)
     plt.close(fig)
 
 
@@ -348,6 +362,7 @@ def evaluate_style_fidelity() -> dict:
     generate_replies()
     judge_replies()
     metrics = compute_metrics()
+    _save_matrix_csv(metrics["confusion"])
     save_heatmap(metrics)
     return metrics
 
@@ -361,10 +376,11 @@ def main() -> None:
     ap.add_argument("--regenerate", action="store_true", help="force-rebuild replies cache")
     ap.add_argument("--rejudge", action="store_true", help="force-rebuild judgments cache")
     ap.add_argument("--character", default="Rory", help="character for the refresh step")
+    ap.add_argument("--suffix", default="", help="output suffix for refresh files (e.g. 2)")
     args = ap.parse_args()
 
     if args.step == "refresh":
-        refresh_character(args.character)
+        refresh_character(args.character, suffix=args.suffix)
         return
     if args.step in ("generate", "all"):
         print(f"replies: {len(generate_replies(regenerate=args.regenerate))}")
@@ -372,6 +388,7 @@ def main() -> None:
         print(f"judgments: {len(judge_replies(rejudge=args.rejudge))}")
     if args.step in ("report", "all"):
         metrics = compute_metrics()
+        _save_matrix_csv(metrics["confusion"])
         save_heatmap(metrics)
         print_report(metrics)
         print(f"\nheatmap: {HEATMAP_PNG}")

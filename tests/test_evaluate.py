@@ -186,11 +186,18 @@ def _write_judgments(rows):
 def test_metrics_perfect_judge():
     rows = [{"true_character": c, "predicted": c, "reply": "x"} for c in CHARACTERS]
     _write_judgments(rows)
-    m = evaluate.compute_metrics()
+    m = evaluate.compute_metrics()                 # pure now — no file writes
     assert m["accuracy"] == 1.0
     assert m["confusion"].shape == (len(CHARACTERS), len(CHARACTERS))
     assert int(m["confusion"].trace()) == len(CHARACTERS)
+
+
+def test_save_matrix_csv_writes():
+    rows = [{"true_character": c, "predicted": c, "reply": "x"} for c in CHARACTERS]
+    _write_judgments(rows)
+    evaluate._save_matrix_csv(evaluate.compute_metrics()["confusion"])
     assert evaluate.MATRIX_CSV.exists()
+    assert evaluate.MATRIX_CSV.read_text().startswith("true\\pred,")
 
 
 def test_metrics_indexing_and_specific_cells():
@@ -269,3 +276,30 @@ def test_rejudge_character_reuses_other_predictions(monkeypatch):
     assert out["Rory"] == "Rory"              # re-judged fresh
     assert out["Luke"] == "Luke"              # reused cached prediction
     assert judged == ["rory reply"]           # judge ran only on Rory's reply
+
+
+def test_refresh_suffix_is_nondestructive(monkeypatch, tmp_path):
+    base_replies = [
+        {"true_character": "Rory", "prompt": "p", "gen_index": 0, "reply": "old rory"},
+        {"true_character": "Lorelai", "prompt": "p", "gen_index": 0, "reply": "lorelai line"},
+    ]
+    base_judgments = [
+        {"true_character": "Rory", "prompt": "p", "gen_index": 0, "reply": "old rory", "predicted": "Lorelai"},
+        {"true_character": "Lorelai", "prompt": "p", "gen_index": 0, "reply": "lorelai line", "predicted": "Lorelai"},
+    ]
+    evaluate.REPLIES_PATH.write_text(json.dumps(base_replies), encoding="utf-8")
+    evaluate.JUDGMENTS_PATH.write_text(json.dumps(base_judgments), encoding="utf-8")
+    monkeypatch.setattr(evaluate.generate, "reply", lambda ch, msg, **kw: "fresh rory")
+    monkeypatch.setattr(evaluate, "_judge", lambda text: "Rory")
+
+    evaluate.refresh_character("Rory", suffix="2")
+
+    # base files untouched
+    assert json.loads(evaluate.REPLIES_PATH.read_text()) == base_replies
+    assert json.loads(evaluate.JUDGMENTS_PATH.read_text()) == base_judgments
+    # versioned files written
+    v2_replies = json.loads((tmp_path / "eval_replies2.json").read_text())
+    assert {r["true_character"]: r["reply"] for r in v2_replies}["Rory"] == "fresh rory"
+    assert (tmp_path / "eval_judgments2.json").exists()
+    assert (tmp_path / "confusion_matrix2.csv").exists()
+    assert (tmp_path / "confusion_matrix2.png").exists()
