@@ -224,3 +224,48 @@ def test_save_heatmap_writes_png():
     evaluate.save_heatmap(evaluate.compute_metrics())
     assert evaluate.HEATMAP_PNG.exists()
     assert evaluate.HEATMAP_PNG.stat().st_size > 0
+
+
+# --- single-character refresh --------------------------------------------------
+
+def test_regenerate_character_only_touches_that_character(monkeypatch):
+    evaluate.REPLIES_PATH.write_text(json.dumps([
+        {"true_character": "Rory", "prompt": "p", "gen_index": 0, "reply": "old rory"},
+        {"true_character": "Luke", "prompt": "p", "gen_index": 0, "reply": "old luke"},
+    ]), encoding="utf-8")
+    seen = []
+
+    def fake_reply(ch, msg, **kwargs):
+        seen.append(kwargs)
+        return f"new {ch}"
+
+    monkeypatch.setattr(evaluate.generate, "reply", fake_reply)
+
+    out = {r["true_character"]: r["reply"] for r in evaluate.regenerate_character("Rory")}
+    assert out["Rory"] == "new Rory"
+    assert out["Luke"] == "old luke"          # untouched
+    # generation cost params are threaded through
+    assert seen == [{"effort": evaluate.EVAL_EFFORT, "max_tokens": evaluate.EVAL_MAX_TOKENS}]
+
+
+def test_rejudge_character_reuses_other_predictions(monkeypatch):
+    evaluate.REPLIES_PATH.write_text(json.dumps([
+        {"true_character": "Rory", "prompt": "p", "gen_index": 0, "reply": "rory reply"},
+        {"true_character": "Luke", "prompt": "p", "gen_index": 0, "reply": "luke reply"},
+    ]), encoding="utf-8")
+    evaluate.JUDGMENTS_PATH.write_text(json.dumps([
+        {"true_character": "Rory", "prompt": "p", "gen_index": 0, "reply": "rory reply", "predicted": "Lorelai"},
+        {"true_character": "Luke", "prompt": "p", "gen_index": 0, "reply": "luke reply", "predicted": "Luke"},
+    ]), encoding="utf-8")
+    judged = []
+
+    def fake_judge(text):
+        judged.append(text)
+        return "Rory"
+
+    monkeypatch.setattr(evaluate, "_judge", fake_judge)
+
+    out = {r["true_character"]: r["predicted"] for r in evaluate.rejudge_character("Rory")}
+    assert out["Rory"] == "Rory"              # re-judged fresh
+    assert out["Luke"] == "Luke"              # reused cached prediction
+    assert judged == ["rory reply"]           # judge ran only on Rory's reply

@@ -83,10 +83,12 @@ _LINES = {
 
 @pytest.fixture(autouse=True)
 def _clear_caches():
-    """Each test gets a clean retrieval cache (it's an lru_cache on the module)."""
+    """Each test gets clean retrieval + centroid caches (lru_caches on the module)."""
     style._load_index.cache_clear()
+    style._all_centroids.cache_clear()
     yield
     style._load_index.cache_clear()
+    style._all_centroids.cache_clear()
 
 
 @pytest.fixture
@@ -99,6 +101,43 @@ def patched(tmp_path, monkeypatch):
     monkeypatch.setattr(style, "_embedder", lambda: embedder)
     monkeypatch.setattr(style, "_client", lambda: client)
     return embedder, client, tmp_path
+
+
+# A geometry-controlled world for contrastive retrieval: exact text -> vector, so
+# query similarity, centroids, and distinctiveness are all predictable.
+_WORLD_MAP = {
+    "the distinctive alpha thing": [1.0, 0.0, 0.0],   # far from B's voice
+    "the shared topic here": [0.0, 1.0, 0.0],         # sits on B's centroid
+    "bee line number one": [0.0, 1.0, 0.0],
+    "bee line number two": [0.0, 1.0, 0.0],
+    "bee line number three": [0.0, 1.0, 0.0],
+    "query about topics here": [1.0, 1.0, 0.0],        # equally near both A lines
+}
+_WORLD_LINES = {
+    "A": ["the distinctive alpha thing", "the shared topic here"],
+    "B": ["bee line number one", "bee line number two", "bee line number three"],
+}
+
+
+class MapEmbedder:
+    """Embeds known strings to fixed vectors (unknown -> zeros), then normalizes."""
+
+    def encode(self, texts, normalize_embeddings=False, show_progress_bar=False):
+        vecs = np.array([_WORLD_MAP.get(t, [0.0, 0.0, 0.0]) for t in texts], dtype="float32")
+        if normalize_embeddings:
+            norms = np.linalg.norm(vecs, axis=1, keepdims=True)
+            vecs = vecs / np.clip(norms, 1e-12, None)
+        return vecs
+
+
+@pytest.fixture
+def world(tmp_path, monkeypatch):
+    """Two-character world (A, B) with controlled geometry for contrastive tests."""
+    monkeypatch.setattr(style, "PROCESSED_DIR", tmp_path)
+    monkeypatch.setattr(style, "CHARACTERS", ("A", "B"))
+    monkeypatch.setattr(style, "_all_lines", lambda: _WORLD_LINES)
+    monkeypatch.setattr(style, "_embedder", lambda: MapEmbedder())
+    return tmp_path
 
 
 # --- pure-logic helpers --------------------------------------------------------
@@ -155,28 +194,52 @@ def test_build_index_rebuild_forces_reencode(patched):
     assert embedder.encode_calls == 2
 
 
-# --- retrieve ------------------------------------------------------------------
+# --- _select: motif caps, near-dup drop, backfill ------------------------------
 
-def test_retrieve_returns_k_lines(patched):
-    out = style.retrieve("Test", "coffee please", 3)
+def test_select_caps_one_coffee_one_book():
+    lines = ["coffee one cup", "coffee two cup", "a good book here", "plain line here"]
+    vecs = np.eye(4, dtype="float32")             # all orthogonal -> no dups
+    out = style._select(lines, vecs, 3)
     assert len(out) == 3
-    assert all(isinstance(s, str) for s in out)
+    assert sum("coffee" in ln for ln in out) == 1   # capped (non-coffee available)
+    assert sum(("book" in ln or "read" in ln) for ln in out) == 1
 
 
-def test_retrieve_ranks_by_cosine(patched):
-    coffee_lines = {"I love coffee so much", "Coffee is the best thing"}
-    top2 = style.retrieve("Test", "coffee", 2)
-    assert set(top2) == coffee_lines              # both coffee lines outrank the rest
+def test_select_backfills_when_starved():
+    lines = ["coffee one cup", "coffee two cup", "coffee three cup"]
+    vecs = np.eye(3, dtype="float32")
+    out = style._select(lines, vecs, 3)
+    assert len(out) == 3                            # cap relaxed — nothing else to use
+    assert sum("coffee" in ln for ln in out) == 3
 
-    assert style.retrieve("Test", "book", 1)[0] == "Reading my favorite book now"
-    assert style.retrieve("Test", "dog", 1)[0] == "The big dog ran away"
+
+def test_select_drops_near_duplicates():
+    lines = ["unique line one", "unique line one too", "another distinct line"]
+    vecs = np.array([[1, 0, 0], [1, 0, 0], [0, 1, 0]], dtype="float32")  # first two identical
+    out = style._select(lines, vecs, 3)
+    assert out == ["unique line one", "another distinct line"]
 
 
-def test_retrieve_builds_index_on_demand(patched):
-    _embedder, _client, tmp_path = patched
-    assert not (tmp_path / "test_emb.npy").exists()
-    style.retrieve("Test", "coffee", 1)           # triggers build_index
-    assert (tmp_path / "test_emb.npy").exists()
+# --- centroid + contrastive retrieve -------------------------------------------
+
+def test_build_centroid_is_unit_mean(world):
+    c = style.build_centroid("A")                  # mean of [1,0,0] and [0,1,0]
+    assert np.allclose(c, [0.7071, 0.7071, 0.0], atol=1e-3)
+    assert np.isclose(np.linalg.norm(c), 1.0)
+
+
+def test_retrieve_prefers_distinctive_over_shared(world):
+    # both A lines are equally query-relevant; the one far from B's voice should win
+    out = style.retrieve("A", "query about topics here", 2)
+    assert out[0] == "the distinctive alpha thing"
+    assert out[1] == "the shared topic here"
+
+
+def test_retrieve_builds_index_on_demand(world):
+    tmp_path = world
+    assert not (tmp_path / "a_emb.npy").exists()
+    style.retrieve("A", "query about topics here", 1)   # triggers build_index
+    assert (tmp_path / "a_emb.npy").exists()
 
 
 # --- build_style_card ----------------------------------------------------------

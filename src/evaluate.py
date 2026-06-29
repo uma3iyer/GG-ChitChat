@@ -168,6 +168,68 @@ def judge_replies(rejudge: bool = False) -> list[dict]:
     return judged
 
 
+# --- single-character refresh (regenerate + re-judge one character only) --------
+
+def regenerate_character(character: str) -> list[dict]:
+    """Regenerate only this character's replies in eval_replies.json (others untouched)."""
+    rows = json.loads(REPLIES_PATH.read_text(encoding="utf-8"))
+    updated = [
+        {
+            **r,
+            "reply": generate.reply(
+                character, r["prompt"], effort=EVAL_EFFORT, max_tokens=EVAL_MAX_TOKENS
+            ),
+        }
+        if r["true_character"] == character
+        else r
+        for r in rows
+    ]
+    EVAL_DIR.mkdir(parents=True, exist_ok=True)
+    REPLIES_PATH.write_text(json.dumps(updated, indent=2, ensure_ascii=False), encoding="utf-8")
+    return updated
+
+
+def rejudge_character(character: str) -> list[dict]:
+    """Re-judge only this character's replies; reuse cached predictions for everyone else."""
+    replies = json.loads(REPLIES_PATH.read_text(encoding="utf-8"))
+    old = {
+        (j["true_character"], j["prompt"], j["gen_index"]): j["predicted"]
+        for j in json.loads(JUDGMENTS_PATH.read_text(encoding="utf-8"))
+    }
+    judged = [
+        {
+            **r,
+            "predicted": _judge(r["reply"])
+            if r["true_character"] == character
+            else old.get((r["true_character"], r["prompt"], r["gen_index"])),
+        }
+        for r in replies
+    ]
+    EVAL_DIR.mkdir(parents=True, exist_ok=True)
+    JUDGMENTS_PATH.write_text(json.dumps(judged, indent=2, ensure_ascii=False), encoding="utf-8")
+    return judged
+
+
+def refresh_character(character: str) -> None:
+    """Regenerate + re-judge one character, recompute, and print a before/after."""
+    idx = {c: i for i, c in enumerate(CHARACTERS)}
+    before = compute_metrics()
+    regenerate_character(character)
+    rejudge_character(character)
+    after = compute_metrics()
+    save_heatmap(after)
+
+    def to_lorelai(m: dict) -> int:
+        return int(m["confusion"][idx[character], idx["Lorelai"]])
+
+    print(
+        f"\n{character} recall:     {before['recall'][character]:.1%} -> {after['recall'][character]:.1%}"
+    )
+    print(f"{character} -> Lorelai:  {to_lorelai(before)} -> {to_lorelai(after)}")
+    print(f"overall accuracy: {before['accuracy']:.1%} -> {after['accuracy']:.1%}\n")
+    print_report(after)
+
+
 # --- step 3: metrics + report --------------------------------------------------
 
 def compute_metrics() -> dict:
@@ -293,12 +355,17 @@ def evaluate_style_fidelity() -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser(description="Style-fidelity eval (generate / judge / report).")
     ap.add_argument(
-        "step", nargs="?", default="all", choices=["generate", "judge", "report", "all"]
+        "step", nargs="?", default="all",
+        choices=["generate", "judge", "report", "refresh", "all"],
     )
     ap.add_argument("--regenerate", action="store_true", help="force-rebuild replies cache")
     ap.add_argument("--rejudge", action="store_true", help="force-rebuild judgments cache")
+    ap.add_argument("--character", default="Rory", help="character for the refresh step")
     args = ap.parse_args()
 
+    if args.step == "refresh":
+        refresh_character(args.character)
+        return
     if args.step in ("generate", "all"):
         print(f"replies: {len(generate_replies(regenerate=args.regenerate))}")
     if args.step in ("judge", "all"):

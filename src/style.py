@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np
 from dotenv import load_dotenv
 
-from .load import lines_by_character
+from .load import lines_by_character, CHARACTERS
 
 PROCESSED_DIR = Path(__file__).resolve().parent.parent / "data" / "processed"
 EMBED_MODEL = "all-MiniLM-L6-v2"   # small, standard sentence-transformer (384-dim)
@@ -25,6 +25,10 @@ CARD_MODEL = "claude-opus-4-8"
 MIN_WORDS = 3                      # drop low-personality lines ("Mom", "Yeah", "Sure")
 CARD_SAMPLE_SIZE = 80              # exemplar lines shown to the LLM when writing a card
 CARD_MAX_TOKENS = 1024
+CONTRAST_POOL = 30                 # candidate pool by query similarity before reranking
+CONTRAST_WEIGHT = 0.5             # weight on distinctiveness vs query similarity
+MOTIF_CAP = 1                     # <=1 coffee line and <=1 book/read line in the final k
+DUP_SIM = 0.9                     # cosine >= this -> treat as a near-duplicate
 
 _CARD_PROMPT = """You are a dialogue-style analyst for the show Gilmore Girls.
 Below are sample lines spoken by {character}. Write a short STYLE CARD (a few
@@ -126,15 +130,82 @@ def _load_index(character: str) -> tuple[np.ndarray, tuple[str, ...]]:
     return vecs, lines
 
 
+def build_centroid(character: str, rebuild: bool = False) -> np.ndarray:
+    """Unit-normalized mean of the character's line vectors (cached as <char>_centroid.npy)."""
+    path = PROCESSED_DIR / f"{character.lower()}_centroid.npy"
+    if path.exists() and not rebuild:
+        return np.load(path)
+    vecs, _ = _load_index(character)
+    c = vecs.mean(axis=0)
+    norm = np.linalg.norm(c)
+    c = (c / norm if norm else c).astype("float32")
+    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    np.save(path, c)
+    return c
+
+
+@lru_cache(maxsize=1)
+def _all_centroids() -> dict[str, np.ndarray]:
+    """Per-character voice centroids, used to score how distinctive a line is."""
+    return {c: build_centroid(c) for c in CHARACTERS}
+
+
+def _select(lines: list[str], vecs: np.ndarray, k: int) -> list[str]:
+    """Take up to k lines: motif caps + near-dup drop, backfilling so small chars aren't starved."""
+    sel_lines: list[str] = []
+    sel_vecs: list[np.ndarray] = []
+    held: list[tuple[str, np.ndarray]] = []
+    coffee = book = 0
+
+    def is_dup(v: np.ndarray) -> bool:
+        return any(float(v @ sv) >= DUP_SIM for sv in sel_vecs)
+
+    for line, v in zip(lines, vecs):
+        if is_dup(v):
+            continue
+        low = line.lower()
+        ic = "coffee" in low
+        ib = "book" in low or "read" in low          # 'read' covers reading
+        if (ic and coffee >= MOTIF_CAP) or (ib and book >= MOTIF_CAP):
+            held.append((line, v))                   # capped now; may backfill if starved
+            continue
+        sel_lines.append(line)
+        sel_vecs.append(v)
+        coffee += ic
+        book += ib
+        if len(sel_lines) == k:
+            return sel_lines
+    for line, v in held:                             # relax caps only if we couldn't fill k
+        if is_dup(v):
+            continue
+        sel_lines.append(line)
+        sel_vecs.append(v)
+        if len(sel_lines) == k:
+            break
+    return sel_lines
+
+
 def retrieve(character: str, query: str, k: int) -> list[str]:
-    """Return the k real lines most cosine-similar to the query, most similar first."""
+    """Top-k lines: query-relevant AND distinctive to the character (contrastive rerank)."""
     vecs, lines = _load_index(character)
     q = np.asarray(
         _embedder().encode([query], normalize_embeddings=True), dtype="float32"
     )[0]
     sims = vecs @ q                              # both unit-normalized → cosine similarity
-    top = np.argsort(-sims)[:k]
-    return [lines[i] for i in top]
+    pool = np.argsort(-sims)[:CONTRAST_POOL]     # candidate pool by query similarity
+
+    cents = _all_centroids()
+    own = cents[character]
+    others = [c for name, c in cents.items() if name != character]
+    cand = vecs[pool]
+    own_sim = cand @ own
+    other_sim = (
+        (cand @ np.stack(others).T).max(axis=1) if others else np.zeros(len(pool))
+    )
+    distinct = own_sim - other_sim               # distinctiveness vs other characters
+    final = sims[pool] + CONTRAST_WEIGHT * distinct
+    ranked = pool[np.argsort(-final)]
+    return _select([lines[i] for i in ranked], vecs[ranked], k)
 
 
 def main() -> None:
