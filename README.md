@@ -31,6 +31,21 @@ pytest                 # run tests
 streamlit run app.py   # launch the chat UI
 ```
 
+## Run the API
+
+A FastAPI service (`api/main.py`) wraps the bot:
+
+```bash
+uvicorn api.main:app --reload          # http://127.0.0.1:8000
+# GET  /health  -> {"status": "ok"}
+# POST /chat    {"character": "Lorelai", "message": "hi"} -> {"reply": "..."}
+```
+
+Startup loads the embedder and all seven characters' style cards + embeddings
+once. It **requires** the cached artifacts (`<char>_card.md`, `<char>_emb.npy`,
+`<char>_lines.json` in `data/processed/`) — a missing artifact fails the boot by
+design. Build them first via `src/style.py` (`build_style_card` + `build_index`).
+
 ## Data & copyright
 
 Gilmore Girls scripts are copyrighted. Transcripts and any derived lines are

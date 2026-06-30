@@ -242,6 +242,23 @@ def test_retrieve_builds_index_on_demand(world):
     assert (tmp_path / "a_emb.npy").exists()
 
 
+# --- preload -------------------------------------------------------------------
+
+def test_preload_raises_on_missing_artifacts(world):
+    with pytest.raises(FileNotFoundError) as exc:
+        style.preload(("A", "B"))
+    assert "a_card.md" in str(exc.value)            # lists what's missing
+
+
+def test_preload_warms_when_present(world):
+    tmp_path = world
+    for c in ("A", "B"):
+        style.build_index(c)                         # writes <c>_emb.npy + <c>_lines.json
+        (tmp_path / f"{c.lower()}_card.md").write_text("card", encoding="utf-8")
+    style.preload(("A", "B"))                        # all artifacts present -> no raise
+    assert (tmp_path / "a_centroid.npy").exists()    # centroids warmed
+
+
 # --- build_style_card ----------------------------------------------------------
 
 def test_build_style_card_writes_and_caches(patched):

@@ -150,6 +150,31 @@ def _all_centroids() -> dict[str, np.ndarray]:
     return {c: build_centroid(c) for c in CHARACTERS}
 
 
+def preload(characters: tuple[str, ...] = CHARACTERS) -> None:
+    """Load the embedder once and verify + warm each character's cached card + index.
+
+    Raises FileNotFoundError (listing every missing file) if any artifact is absent,
+    so a misconfigured deployment fails loudly at startup instead of silently
+    rebuilding embeddings or calling the LLM on the first request.
+    """
+    _embedder()                                  # load the model once
+    missing = [
+        str(p)
+        for c in characters
+        for p in (
+            PROCESSED_DIR / f"{c.lower()}_card.md",
+            PROCESSED_DIR / f"{c.lower()}_emb.npy",
+            PROCESSED_DIR / f"{c.lower()}_lines.json",
+        )
+        if not p.exists()
+    ]
+    if missing:
+        raise FileNotFoundError("Missing style artifacts:\n  " + "\n  ".join(missing))
+    for c in characters:
+        _load_index(c)                           # warm embeddings into memory
+    _all_centroids()                             # warm centroids
+
+
 def _select(lines: list[str], vecs: np.ndarray, k: int) -> list[str]:
     """Take up to k lines: motif caps + near-dup drop, backfilling so small chars aren't starved."""
     sel_lines: list[str] = []

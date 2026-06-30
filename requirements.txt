@@ -4,5 +4,8 @@ numpy
 matplotlib
 anthropic
 streamlit
+fastapi
+uvicorn[standard]
+httpx
 python-dotenv
 pytest
